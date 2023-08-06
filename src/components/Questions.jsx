@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 const Questions = ({ item, showCorrect, isSelected, onSelect }) => {
     const itemClick = (option) => {
         if (!showCorrect) {
