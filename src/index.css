@@ -38,12 +38,12 @@ body {
   text-align: center;
   font-size: 31.25px;
   font-weight: 700;
+  margin-bottom: 0;
 }
 
 .description {
   color: #293264;
   font-size: 16px;
-  font-weight: 400;
 }
 
 .start-quiz-btn {
@@ -61,10 +61,6 @@ body {
 }
 
 /* Questions Page */
-.questions-page {
-  /* display: flex; */
-  /* flex-direction: column; */
-}
 
 .questions-container {
   display: flex;
@@ -156,4 +152,10 @@ hr {
   display: flex;
   margin: 0;
   align-items: center;
+}
+
+.game-options select {
+  display: flex;
+  margin-bottom: 20px;
+  width: 200px;
 }

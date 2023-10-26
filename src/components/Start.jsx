@@ -1,105 +1,89 @@
-import React, { useState, useEffect } from "react";
-import Questions from "./Questions";
-import { nanoid } from 'nanoid';
-import he from "he";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 
 const Start = () => {
-    //handle the clicks between pages
-    const [isClicked, setIsClicked] = useState(false);
-    //handle the data coming in from the api
-    const [apiData, setApiData] = useState([]);
-    //click button to highlight correct answers
-    const [showCorrect, setShowCorrectValues] = useState(false);
-    //handle the selected options
-    const [selectedOptions, setSelectedOptions] = useState([]);
-    const [dataChange, setDataChange] = useState(false)
+    const [categories, setCategories] = useState('')
+    const [selectedCategory, setSelectedCategory] = useState('')
+    const [selectedDifficulty, setSelectedDifficulty] = useState("")
+    const [selectedType, setSelectedType] = useState('')
+    let navigate = useNavigate()
 
+    localStorage.setItem("Search Params", null)
+    const handleClick = () => {
+        const queryString = [];
+        if (selectedCategory) {
+            queryString.push(`category=${selectedCategory}`);
+        }
+        if (selectedDifficulty) {
+            queryString.push(`difficulty=${selectedDifficulty}`);
+        }
+        if (selectedType) {
+            queryString.push(`type=${selectedType}`);
+        }
 
-    const apiUrl = 'https://opentdb.com/api.php?amount=5';
+        const finalQueryString = queryString.length > 0 ? `${queryString.join("&")}` : "";
+
+        console.log("Final Query String:", finalQueryString);
+        localStorage.setItem("Search Params", finalQueryString)
+        navigate('/gameplay')
+    }
 
     useEffect(() => {
-        fetch(apiUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                const combinedAnswers = data.results.map(item => ({
-                    id: nanoid(),
-                    question: he.decode(item.question),
-                    options: [...item.incorrect_answers.map(he.decode), he.decode(item.correct_answer)].sort(),
-                    correctAnswer: he.decode(item.correct_answer),
-                }));
-                setApiData(combinedAnswers);
-                setSelectedOptions(Array(combinedAnswers.length).fill(null));
-            })
-            .catch(error => {
-                console.error("Error fetching data", error);
-            });
-    }, [dataChange]);
-    // handling button click on the start page
-    const handleClick = () => {
-        setIsClicked(true);
-    }
-    // handling button click on the questions page
-    const setShowCorrect = () => {
-        setShowCorrectValues(prevValue => !prevValue);
-        if (showCorrect) {
-            setDataChange(prevValue => !prevValue)
+        const getCategories = async () => {
+            const response = await fetch('https://opentdb.com/api_category.php')
+            const data = await response.json()
+            setCategories(data.trivia_categories)
         }
+        getCategories()
+    }, [])
+
+    function handleCategoryChange(e) {
+        setSelectedCategory(e.target.value)
+    }
+    function handleDifficultyChange(e) {
+        setSelectedDifficulty(e.target.value)
+    }
+    function handleTypeChange(e) {
+        setSelectedType(e.target.value)
     }
 
-    const handleSelectedItem = (option, questionIndex) => {
-        if (!showCorrect) {
-            setSelectedOptions(prevState => {
-                const newSelectedOptions = [...prevState];
-                newSelectedOptions[questionIndex] = option;
-                return newSelectedOptions;
-            });
-        }
-    }
-    const calculateScore = () => {
-        let score = 0;
-        apiData.forEach((item, index) => {
-            if (selectedOptions[index] === item.correctAnswer) {
-                score++;
-            }
-        });
-        return score;
-    }
-    console.log(calculateScore());
     return (
         <div className="game-page">
-            {!isClicked && (
-                <div className="start-container">
-                    <h2 className="title">Quizzical</h2>
-                    <p className="description">Some description if needed</p>
-                    <button onClick={handleClick} className="start-quiz-btn">Start Quiz</button>
-                </div>
-            )}
-            {isClicked && (
-                <div className="questions-page">
-                    {apiData.map((item, index) => (
-                        <Questions
-                            key={item.id}
-                            item={item}
-                            showCorrect={showCorrect}
-                            onSelect={(option) => handleSelectedItem(option, index)}
-                            isSelected={selectedOptions[index]}
-                        />
-                    ))}
-                    <div className="footer">
-                        {showCorrect && (
-                            <p className="score">Total Score {calculateScore()}/{apiData.length}</p>
+            <div className="start-container">
+                <h2 className="title">Quizzical</h2>
+                <p className="description">Choose your settings:</p>
+                <div className="game-options">
+                    <label htmlFor="category">Category:</label>
+                    <select name="category" onChange={handleCategoryChange}>
+                        <option value=''>-Select Category-</option>
+                        <option value="">All Categories</option>
+                        {categories && categories.map((category, index) =>
+                            <option value={category.id} key={index}>
+                                {category.name}
+                            </option>
                         )}
-                        {!showCorrect ? (
-                            <button onClick={setShowCorrect} className="button">Check answers</button>
-                        ) : <button onClick={setShowCorrect} className="button">Play Again</button>}
-                    </div>
+                    </select>
                 </div>
-            )}
+                <div className="game-options">
+                    <label htmlFor="difficulty">Difficulty:</label>
+                    <select name="difficulty" onChange={handleDifficultyChange}>
+                        <option value=''>-Select Difficulty-</option>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div className="game-options">
+
+                    <label htmlFor="type">Select Type:</label>
+                    <select name="type" onChange={handleTypeChange}>
+                        <option value=''>-Select Type-</option>
+                        <option value="multiple">Multiple Choice</option>
+                        <option value="boolean">True or False</option>
+                    </select>
+                </div>
+                <button onClick={handleClick} className="start-quiz-btn">Start Quiz</button>
+            </div>
         </div>
     );
 }
